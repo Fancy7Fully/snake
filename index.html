@@ -10,6 +10,7 @@
 
     <div id="score">0</div>
     <canvas id="gameCanvas" width="300" height="300"></canvas>
+    <button id="againButton" type="button" onclick="restart()">Play Again!</button>
 
     <style>
       #gameCanvas {
@@ -17,6 +18,11 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+      }
+      #againButton {
+        position: absolute;
+        top:80%;
+        left: 45%;
       }
 
       #score {
@@ -59,9 +65,12 @@
 
     // Get the canvas element
     const gameCanvas = document.getElementById("gameCanvas");
+
+    const button = document.getElementById("againButton");
     // Return a two dimensional drawing context
     const ctx = gameCanvas.getContext("2d");
-
+    // Hide button
+    hideButton();
     // Start game
     main();
     // Create the first food location
@@ -69,14 +78,47 @@
     // Call changeDirection whenever a key is pressed
     document.addEventListener("keydown", changeDirection);
 
+    function restart() {
+      console.log("what");
+      snake = [
+        {x: 150, y: 150},
+        {x: 140, y: 150},
+        {x: 130, y: 150},
+        {x: 120, y: 150},
+        {x: 110, y: 150}
+      ]
 
+      // The user's score
+      score = 0;
+      // When set to true the snake is changing direction
+      changingDirection = false;
+
+      // Horizontal velocity
+      dx = 10;
+      // Vertical velocity
+      dy = 0;
+
+      hideButton();
+      main();
+    }
+
+    function hideButton() {
+      againButton.style.visibility = 'hidden';
+    }
+
+    function showButton() {
+      againButton.style.visibility = '';
+    }
     /**
      * Main function of the game
      * called repeatedly to advance the game
      */
     function main() {
       // If the game ended return early to stop game
-      if (didGameEnd()) return;
+      if (didGameEnd()) {
+        showButton();
+        return;
+      }
 
       setTimeout(function onTick() {
         changingDirection = false;
