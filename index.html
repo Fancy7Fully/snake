@@ -42,13 +42,21 @@
     const FOOD_COLOUR = 'red';
     const FOOD_BORDER_COLOUR = 'darkred';
 
-    let snake = [
+    let snake1 = [
       {x: 150, y: 150},
       {x: 140, y: 150},
       {x: 130, y: 150},
       {x: 120, y: 150},
       {x: 110, y: 150}
-    ]
+    ];
+
+    let snake2 = [
+      {x: 150, y: 200},
+      {x: 140, y: 200},
+      {x: 130, y: 200},
+      {x: 120, y: 200},
+      {x: 110, y: 200}
+    ];
 
     // The user's score
     let score = 0;
@@ -62,6 +70,8 @@
     let dx = 10;
     // Vertical velocity
     let dy = 0;
+    // Which snake is selected
+    let selectedSnake = 1;
 
     // Get the canvas element
     const gameCanvas = document.getElementById("gameCanvas");
@@ -79,14 +89,21 @@
     document.addEventListener("keydown", changeDirection);
 
     function restart() {
-      console.log("what");
-      snake = [
+      snake1 = [
         {x: 150, y: 150},
         {x: 140, y: 150},
         {x: 130, y: 150},
         {x: 120, y: 150},
         {x: 110, y: 150}
       ]
+
+      snake2 = [
+        {x: 150, y: 200},
+        {x: 140, y: 200},
+        {x: 130, y: 200},
+        {x: 120, y: 200},
+        {x: 110, y: 200}
+      ];
 
       // The user's score
       score = 0;
@@ -100,6 +117,7 @@
 
       hideButton();
       main();
+      createFood();
     }
 
     function hideButton() {
@@ -165,12 +183,14 @@
      */
     function advanceSnake() {
       // Create the new Snake's head
-      const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+      const head1 = {x: snake1[0].x + dx, y: snake1[0].y + dy};
+      const head2 = {x: snake2[0].x + dx, y: snake2[0].y + dy};
       // Add the new head to the beginning of snake body
-      snake.unshift(head);
+      snake1.unshift(head1);
+      snake2.unshift(head2);
 
-      const didEatFood = snake[0].x === foodX && snake[0].y === foodY;
-      if (didEatFood) {
+      const didOneEatFood = snake1[0].x === foodX && snake1[0].y === foodY;
+      if (didOneEatFood) {
         // Increase score
         score += 10;
         // Display score on screen
@@ -180,7 +200,16 @@
         createFood();
       } else {
         // Remove the last part of snake body
-        snake.pop();
+        snake1.pop();
+      }
+
+      const didTwoEatFood = snake2[0].x === foodX && snake2[0].y === foodY;
+      if (didTwoEatFood) {
+        score += 10;
+        document.getElementById('score').innerHTML = score;
+        createFood();
+      } else {
+        snake2.pop();
       }
     }
 
@@ -189,16 +218,20 @@
      * or any of the walls
      */
     function didGameEnd() {
-      for (let i = 4; i < snake.length; i++) {
-        if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) return true
+      for (let i = 4; i < snake1.length; i++) {
+        if (snake1[i].x === snake1[0].x && snake1[i].y === snake1[0].y) return true
+      }
+      for (let i = 4; i < snake2.length; i++) {
+        if (snake2[i].x === snake2[0].x && snake2[i].y === snake2[0].y) return true
       }
 
-      const hitLeftWall = snake[0].x < 0;
-      const hitRightWall = snake[0].x > gameCanvas.width - 10;
-      const hitToptWall = snake[0].y < 0;
-      const hitBottomWall = snake[0].y > gameCanvas.height - 10;
+      const hitLeftWall = snake1[0].x < 0 || snake2[0].x < 0;
+      const hitRightWall = snake1[0].x > gameCanvas.width - 10 || snake2[0].x > gameCanvas.width - 10;
+      const hitToptWall = snake1[0].y < 0 || snake2[0].y < 0;
+      const hitBottomWall = snake1[0].y > gameCanvas.height - 10 || snake2[0].y > gameCanvas.height - 10;
+      const hitEachOther = snake1[0].x === snake2[0].x && snake1[0].y === snake2[0].y;
 
-      return hitLeftWall || hitRightWall || hitToptWall || hitBottomWall
+      return hitLeftWall || hitRightWall || hitToptWall || hitBottomWall || hitEachOther
     }
 
     /**
@@ -221,10 +254,15 @@
       foodY = randomTen(0, gameCanvas.height - 10);
 
       // if the new food location is where the snake currently is, generate a new food location
-      snake.forEach(function isFoodOnSnake(part) {
-        const foodIsoNsnake = part.x == foodX && part.y == foodY;
-        if (foodIsoNsnake) createFood();
+      snake1.forEach(function isFoodOnSnake1(part) {
+        const foodIsOnSnake1 = part.x == foodX && part.y == foodY;
+        if (foodIsOnSnake1) createFood();
       });
+      snake2.forEach(function isFoodOnSnake2(part) {
+        const foodIsOnSnake2 = part.x == foodX && part.y == foodY;
+        if (foodIsOnSnake2) createFood();
+      });
+      console.log("created food");
     }
 
     /**
@@ -232,7 +270,8 @@
      */
     function drawSnake() {
       // loop through the snake parts drawing each part on the canvas
-      snake.forEach(drawSnakePart)
+      snake1.forEach(drawSnakePart)
+      snake2.forEach(drawSnakePart)
     }
 
     /**
