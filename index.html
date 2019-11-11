@@ -22,7 +22,7 @@
       #againButton {
         position: absolute;
         top:80%;
-        left: 45%;
+        left: 50%;
       }
 
       #score {
@@ -34,11 +34,13 @@
   </body>
 
   <script>
-    const GAME_SPEED = 100;
+    const GAME_SPEED = 200;
     const CANVAS_BORDER_COLOUR = 'black';
     const CANVAS_BACKGROUND_COLOUR = "white";
     const SNAKE_COLOUR = 'lightgreen';
     const SNAKE_BORDER_COLOUR = 'darkgreen';
+    const SELECTED_SNAKE_COLOR = 'lightblue';
+    const SELECTED_SNAKE_BORDER_COLOR = 'darkblue';
     const FOOD_COLOUR = 'red';
     const FOOD_BORDER_COLOUR = 'darkred';
 
@@ -67,9 +69,11 @@
     // Food y-coordinate
     let foodY;
     // Horizontal velocity
-    let dx = 10;
+    let dx_one = 10;
+    let dx_two = 10;
     // Vertical velocity
-    let dy = 0;
+    let dy_one = 0;
+    let dy_two = 0;
     // Which snake is selected
     let selectedSnake = 1;
 
@@ -89,6 +93,7 @@
     document.addEventListener("keydown", changeDirection);
 
     function restart() {
+      selectedSnake = 1;
       snake1 = [
         {x: 150, y: 150},
         {x: 140, y: 150},
@@ -111,9 +116,11 @@
       changingDirection = false;
 
       // Horizontal velocity
-      dx = 10;
+      dx_one = 10;
+      dx_two = 10;
       // Vertical velocity
-      dy = 0;
+      dy_one = 0;
+      dy_two = 0;
 
       hideButton();
       main();
@@ -183,8 +190,8 @@
      */
     function advanceSnake() {
       // Create the new Snake's head
-      const head1 = {x: snake1[0].x + dx, y: snake1[0].y + dy};
-      const head2 = {x: snake2[0].x + dx, y: snake2[0].y + dy};
+      const head1 = {x: snake1[0].x + dx_one, y: snake1[0].y + dy_one};
+      const head2 = {x: snake2[0].x + dx_two, y: snake2[0].y + dy_two};
       // Add the new head to the beginning of snake body
       snake1.unshift(head1);
       snake2.unshift(head2);
@@ -229,7 +236,20 @@
       const hitRightWall = snake1[0].x > gameCanvas.width - 10 || snake2[0].x > gameCanvas.width - 10;
       const hitToptWall = snake1[0].y < 0 || snake2[0].y < 0;
       const hitBottomWall = snake1[0].y > gameCanvas.height - 10 || snake2[0].y > gameCanvas.height - 10;
-      const hitEachOther = snake1[0].x === snake2[0].x && snake1[0].y === snake2[0].y;
+      let hitEachOther = false;
+      snake1.forEach(function didHit(element) {
+        if (element.x === snake2[0].x && element.y === snake2[0].y) {
+          hitEachOther = true;
+        }
+      });
+
+      if (!hitEachOther) {
+        snake2.forEach(function didHit(element) {
+          if (element.x === snake1[0].x && element.y === snake1[0].y) {
+            hitEachOther = true;
+          }
+        })
+      }
 
       return hitLeftWall || hitRightWall || hitToptWall || hitBottomWall || hitEachOther
     }
@@ -262,7 +282,6 @@
         const foodIsOnSnake2 = part.x == foodX && part.y == foodY;
         if (foodIsOnSnake2) createFood();
       });
-      console.log("created food");
     }
 
     /**
@@ -270,8 +289,13 @@
      */
     function drawSnake() {
       // loop through the snake parts drawing each part on the canvas
-      snake1.forEach(drawSnakePart)
-      snake2.forEach(drawSnakePart)
+      if (selectedSnake === 1) {
+        snake1.forEach(drawSelectedSnakePart);
+        snake2.forEach(drawSnakePart)
+      } else {
+        snake1.forEach(drawSnakePart);
+        snake2.forEach(drawSelectedSnakePart)
+      }
     }
 
     /**
@@ -284,6 +308,21 @@
 
       // Set the border colour of the snake part
       ctx.strokestyle = SNAKE_BORDER_COLOUR;
+
+      // Draw a "filled" rectangle to represent the snake part at the coordinates
+      // the part is located
+      ctx.fillRect(snakePart.x, snakePart.y, 10, 10);
+
+      // Draw a border around the snake part
+      ctx.strokeRect(snakePart.x, snakePart.y, 10, 10);
+    }
+
+    function drawSelectedSnakePart(snakePart) {
+      // Set the colour of the snake part
+      ctx.fillStyle = SELECTED_SNAKE_COLOR;
+
+      // Set the border colour of the snake part
+      ctx.strokestyle = SELECTED_SNAKE_BORDER_COLOR;
 
       // Draw a "filled" rectangle to represent the snake part at the coordinates
       // the part is located
@@ -306,6 +345,7 @@
       const RIGHT_KEY = 39;
       const UP_KEY = 38;
       const DOWN_KEY = 40;
+      const SPACE_KEY = 32;
 
       /**
        * Prevent the snake from reversing
@@ -318,11 +358,17 @@
       changingDirection = true;
       
       const keyPressed = event.keyCode;
+      if (keyPressed === SPACE_KEY) {
+        selectedSnake = 3 - selectedSnake;
+      }
 
-      const goingUp = dy === -10;
-      const goingDown = dy === 10;
-      const goingRight = dx === 10;
-      const goingLeft = dx === -10;
+      const goingUp = (selectedSnake === 1 && dy_one === -10) || (selectedSnake === 2 && dy_two === -10);
+      const goingDown = (selectedSnake === 1 && dy_one === 10) || (selectedSnake === 2 && dy_two === 10);
+      const goingRight = (selectedSnake === 1 && dx_one === 10) || (selectedSnake === 2 && dx_two === 10);
+      const goingLeft = (selectedSnake === 1 && dx_one === -10) || (selectedSnake === 2 && dx_two === -10);
+
+      let dx = 0;
+      let dy = 0;
 
       if (keyPressed === LEFT_KEY && !goingRight) {
         dx = -10;
@@ -342,6 +388,15 @@
       if (keyPressed === DOWN_KEY && !goingUp) {
         dx = 0;
         dy = 10;
+      }
+      if ( dx + dy != 0) {
+        if (selectedSnake === 1) {
+          dx_one = dx;
+          dy_one = dy;
+        } else {
+          dx_two = dx;
+          dy_two = dy;
+        }
       }
     }
 
